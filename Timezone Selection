@@ -1,0 +1,90 @@
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "SetTimezoneServlet", urlPatterns = {"/SetTimezoneServlet"})
+public class SetTimezoneServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Get the selected timezone from the request
+        String timezone = request.getParameter("timezone");
+
+        // Create a cookie to store the timezone information
+        Cookie timezoneCookie = new Cookie("user_timezone", timezone);
+
+        // Set the cookie's expiration time (for example, 1 day)
+        timezoneCookie.setMaxAge(24 * 60 * 60);
+
+        // Add the cookie to the response
+        response.addCookie(timezoneCookie);
+
+        // Redirect the user to the page that displays the current time
+        response.sendRedirect("DisplayTimeServlet");
+    }
+}
+//(2)
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "DisplayTimeServlet", urlPatterns = {"/DisplayTimeServlet"})
+public class DisplayTimeServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Retrieve the user's timezone from the cookie
+        String timezone = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("user_timezone")) {
+                    timezone = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // Get the current time in the user's timezone
+        LocalDateTime currentTime = LocalDateTime.now(ZoneId.of(timezone));
+        String formattedTime = currentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        // Display the current time
+        response.setContentType("text/html;charset=UTF-8");
+        response.getWriter().println("<html><head><title>Current Time</title></head><body>");
+        response.getWriter().println("<h2>Current Time in " + timezone + ":</h2>");
+        response.getWriter().println("<p>" + formattedTime + "</p>");
+        response.getWriter().println("</body></html>");
+    }
+}
+//index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timezone Selection</title>
+</head>
+<body>
+    <h2>Select Your Timezone</h2>
+    <form action="SetTimezoneServlet" method="post">
+        <label for="timezone">Select your timezone:</label>
+        <select id="timezone" name="timezone">
+            <option value="America/New_York">America/New_York</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+            <!-- Add more options as needed -->
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
