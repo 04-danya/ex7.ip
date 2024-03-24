@@ -1,0 +1,81 @@
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "VowelCounterServlet", urlPatterns = {"/countVowels"})
+public class VowelCounterServlet extends HttpServlet {
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+
+        // Get the word from the request parameter
+        String word = request.getParameter("word");
+
+        // Count the number of vowels in the word
+        int vowelCount = countVowels(word);
+
+        // Forward the result to the JSP page for display
+        request.setAttribute("vowelCount", vowelCount);
+        request.getRequestDispatcher("result.jsp").forward(request, response);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Vowel Counter Servlet";
+    }
+    
+    
+    private int countVowels(String word) {
+        int count = 0;
+        for (int i = 0; i < word.length(); i++) {
+            char ch = Character.toLowerCase(word.charAt(i));
+            if (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u') {
+                count++;
+            }
+        }
+        return count;
+    }
+}
+//index .html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vowel Counter</title>
+</head>
+<body>
+    <h2>Enter a Word to Count Vowels</h2>
+    <form action="countVowels" method="post">
+        <label for="word">Enter a word:</label>
+        <input type="text" id="word" name="word">
+        <button type="submit">Count Vowels</button>
+    </form>
+</body>
+</html>
+//jsp
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vowel Count Result</title>
+</head>
+<body>
+    <h2>Result</h2>
+    <p>Number of vowels in the word: <%= request.getAttribute("vowelCount") %></p>
+    <a href="index.html">Back to Home</a>
+</body>
+</html>
