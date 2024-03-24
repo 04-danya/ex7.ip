@@ -1,0 +1,105 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "BookServlet", urlPatterns = {"/books"})
+public class BookServlet extends HttpServlet {
+
+    // Dummy list of books
+    private ArrayList<Book> books;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        // Initialize the list of books
+        books = new ArrayList<>();
+        books.add(new Book("The Great Gatsby", "F. Scott Fitzgerald"));
+        books.add(new Book("To Kill a Mockingbird", "Harper Lee"));
+        books.add(new Book("1984", "George Orwell"));
+        books.add(new Book("Pride and Prejudice", "Jane Austen"));
+    }
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+
+        // Get the sort parameter from the request
+        String sortParam = request.getParameter("sort");
+
+        // Sort the books based on the sort parameter
+        if (sortParam != null && sortParam.equals("author")) {
+            Collections.sort(books, Comparator.comparing(Book::getAuthor));
+        } else {
+            Collections.sort(books, Comparator.comparing(Book::getTitle));
+        }
+
+        // Forward the sorted list of books to the JSP page for display
+        request.setAttribute("books", books);
+        request.getRequestDispatcher("books.jsp").forward(request, response);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Book Servlet";
+    }
+    
+    // Inner class representing a book
+    public class Book {
+        private String title;
+        private String author;
+
+        public Book(String title, String author) {
+            this.title = title;
+            this.author = author;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getAuthor() {
+            return author;
+        }
+    }
+}
+//index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book List</title>
+</head>
+<body>
+    <h2>Book List</h2>
+    <form action="books" method="get">
+        <label for="sort">Sort by:</label>
+        <select id="sort" name="sort">
+            <option value="title">Title</option>
+            <option value="author">Author</option>
+        </select>
+        <button type="submit">Sort</button>
+    </form>
+    <ul>
+        <% for (BookServlet.Book book : (ArrayList<BookServlet.Book>)request.getAttribute("books")) { %>
+            <li><b>Title:</b> <%= book.getTitle() %>, <b>Author:</b> <%= book.getAuthor() %></li>
+        <% } %>
+    </ul>
+</body>
+</html>
